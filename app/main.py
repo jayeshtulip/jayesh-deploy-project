@@ -1,45 +1,24 @@
-name: CI/CD Pipeline
+from fastapi import FastAPI
+from pydantic import BaseModel
+import numpy as np
+import joblib
 
-on:
-  push:
-    branches: [main]
+app = FastAPI()
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+model = joblib.load("model/model.pkl")
 
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+class IrisInput(BaseModel):
+    sepal_length: float
+    sepal_width: float
+    petal_length: float
+    petal_width: float
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+@app.get("/")
+def root():
+    return {"message": "✅ Iris model working autoupdated"}
 
-    - name: Install dependencies
-      working-directory: ./app
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Build Docker image
-      run: docker build -t 9740516294/iris-fastapi-app:latest ./app
-
-    - name: Push to Docker Hub
-      run: |
-        echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-        docker push 9740516294/iris-fastapi-app:latest
-
-    - name: Deploy to EC2 and restart container
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: 3.110.27.223
-        username: ec2-user
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
-        script: |
-          docker stop $(docker ps -q) || true
-          docker rm $(docker ps -a -q) || true
-          docker pull 9740516294/iris-fastapi-app:latest
-          docker run -d -p 8000:8000 9740516294/iris-fastapi-app:latest
-
+@app.post("/predict")
+def predict_species(data: IrisInput):
+    x = np.array([[data.sepal_length, data.sepal_width, data.petal_length, data.petal_width]])
+    prediction = model.predict(x)
+    return {"predicted_class": int(prediction[0])}
