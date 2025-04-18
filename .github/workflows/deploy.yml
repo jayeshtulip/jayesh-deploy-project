@@ -39,8 +39,10 @@ jobs:
           docker run -d -p 8000:8000 --name iris-app ${{ secrets.DOCKER_USERNAME }}/iris-model-app
 
           echo "== Wait for FastAPI to boot =="
-          sleep 5
+          sleep 10
+
+          echo "== Log container output (debug) =="
+          docker logs iris-app || true
 
           echo "== Health check =="
           curl -s http://localhost:8000/
-
