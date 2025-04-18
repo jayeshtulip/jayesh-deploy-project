@@ -1,10 +1,12 @@
-FROM python:3.10-slim
+# Existing lines
+FROM python:3.10
 
 WORKDIR /app
 
-COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
-COPY app /app
+# 👇 Add this to copy the model folder from app/model/
+COPY app app/
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
