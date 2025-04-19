@@ -5,6 +5,7 @@ import joblib
 
 app = FastAPI()
 
+# ✅ Load the model using the correct relative path
 model = joblib.load("model/model.pkl")
 
 class IrisInput(BaseModel):
